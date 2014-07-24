@@ -3,7 +3,7 @@ package demo
 import com.excilys.ebi.gatling.core.Predef._
 import com.excilys.ebi.gatling.http.Predef._
 
-class SimulationtoTaobao extends Simulation {
+class TaobaoHomePage extends Simulation {
   // your code starts here
   val scn = scenario("My First Scenario")
     .exec(http("My Page")

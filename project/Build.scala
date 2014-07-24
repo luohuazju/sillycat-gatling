@@ -19,7 +19,7 @@ object BuildSettings {
     version := buildVersion,
     scalaVersion := buildScalaVersion,
     scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8"),
-    javacOptions := Seq("-Xlint:unchecked", "-Xlint:deprecation","-encoding", "utf8"),
+    javacOptions := Seq("-Xlint:unchecked", "-Xlint:deprecation","-encoding", "utf8", "-Xmx4G"),
     fork in test := true,
     resolvers ++= Dependencies.resolutionRepos)
   val projectSettings = Defaults.defaultSettings ++ globalSettings
@@ -57,7 +57,7 @@ object Dependencies {
   object V {
     val slf4j = "1.7.2"
     val logback = "1.0.0"
-    val gatling = "1.5.6"
+    val gatling = "1.5.4"
   }
 
   object Compile {

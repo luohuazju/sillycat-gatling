@@ -4,8 +4,6 @@ resolvers += Resolver.url("artifactory", url("http://scalasbt.artifactoryonline.
 
 resolvers += Classpaths.typesafeResolver
 
-addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.1.0")
-
 addSbtPlugin("com.typesafe.startscript" % "xsbt-start-script-plugin" % "0.5.3")
 
 addSbtPlugin("cc.spray" % "sbt-revolver" % "0.6.1")
@@ -15,5 +13,5 @@ resolvers += Resolver.url("sbt-plugin-releases",
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.8.5")
 
-addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.1.0")
+addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.4.0")
 

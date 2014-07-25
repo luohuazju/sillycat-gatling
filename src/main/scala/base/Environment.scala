@@ -15,12 +15,12 @@ trait Environment {
   val area = config.getString("connection.area")
 
   val brand = config.getString("brand.code")
-  val brandAppId = config.getString("brand.appId")
+  val appId = config.getString("brand.appId")
 
   val numUsers = config.getInt("pushcallbackevent.numUsers")
   val repeatTimes = config.getInt("pushcallbackevent.repeatTimes")
   val deviceId = config.getString("pushcallbackevent.deviceId")
-  val campaginId = config.getString("pushcallbackevent.campaginId")
+  val campaignId = config.getString("pushcallbackevent.campaginId")
 
 
 }

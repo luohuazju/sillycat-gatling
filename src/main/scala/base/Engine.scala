@@ -24,7 +24,7 @@ object Engine extends Logging {
 
     val props = new GatlingPropertiesBuilder
 
-    //props.dataDirectory(IDEPathHelper.dataFolder.toString)
+    props.dataDirectory(IDEPathHelper.dataFolder.toString)
     props.resultsDirectory(IDEPathHelper.resultsFolder.toString)
     //props.requestBodiesDirectory(IDEPathHelper.requestBodiesFolder.toString)
     props.sourcesDirectory(IDEPathHelper.mavenSourcesDir.toString)

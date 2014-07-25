@@ -6,4 +6,5 @@ import scala.tools.nsc.io.Path
 object IDEPathHelper extends Environment{
   val mavenSourcesDir =   projectHome + "/src/main/scala"
   val resultsFolder = reportHome
+  val dataFolder = projectHome + "/userfiles/data"
 }

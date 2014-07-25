@@ -15,7 +15,7 @@
 	<!-- Uncomment for logging HTTP responses on check failure -->
 	<!-- <logger name="com.excilys.ebi.gatling.http.ahc.GatlingAsyncHandler" level="DEBUG" /> -->
 
-	<root level="ERROR">
+	<root level="DEBUG">
 		<appender-ref ref="CONSOLE" />
 	</root>
 

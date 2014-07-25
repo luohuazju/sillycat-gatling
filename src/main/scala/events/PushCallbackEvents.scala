@@ -1,9 +1,21 @@
 package events
 
-import base.Environment
 import com.excilys.ebi.gatling.core.Predef._
-import com.excilys.ebi.gatling.core.Predef.bootstrap._
 import com.excilys.ebi.gatling.http.Predef._
+import akka.util.duration._
+import com.excilys.ebi.gatling.core.Predef._
+import com.excilys.ebi.gatling.http.Predef._
+import com.excilys.ebi.gatling.jdbc.Predef._
+import com.excilys.ebi.gatling.http.Headers.Names._
+import akka.util.duration._
+import bootstrap._
+import com.excilys.ebi.gatling.core.structure.ScenarioBuilder
+import akka.dispatch.{ExecutionContext, Future}
+
+import com.excilys.ebi.gatling.core.Predef._
+import com.excilys.ebi.gatling.http.Predef._
+import bootstrap._
+import base.Environment
 
 class PushCallbackEvents extends Simulation with Environment {
 
@@ -35,33 +47,20 @@ class PushCallbackEvents extends Simulation with Environment {
 
   val callbackDevice = exec(http("push_callback_events")
     .post("/api/brands/"+ brand + "/events")
-    .body(pushCallbackEventJson(deviceId, brandAppId, campaginId))
+    .body(EventJSONEntities.pushCallbackEventJson("${deviceId}", "${latitude}","${longitude}", appId, campaignId))
     .headers(headers)
     .check(status.is(200))
     .check(bodyString))
 
+  val latlngFeed = csv("latlng_information.csv")
+  val deviceRegFeed = EventFeeds.deviceStableFeeder(5)
+
   val multiScn = scenario("Push Callback Events Scenario")
-    .repeat(repeatTimes){ exec(callbackDevice) }
+    .repeat(repeatTimes){ feed(latlngFeed).feed(deviceRegFeed).exec(callbackDevice) }
 
   setUp(
     multiScn.users(numUsers).ramp(rampSeconds).protocolConfig(httpConf)
   )
 
-  def pushCallbackEventJson(deviceId: String, appId: String, campaginId:String ) = {
-    """{
-      'apiVersion': '1.0',
-      'minorSdkVersion': 5,
-      'appId': '""" + appId + """',
-      'majorSdkVersion': 2,
-      'revisionSdkVersion': 2,
-      'longitude': 30.359960,
-      'timeZone': 'America/Boise',
-      'callbackData': '{\"campaignId\":""" + campaginId + """,\"pushMillis\":1402939800004,\"offset\":24}',
-      'latitude': -97.741921,
-      'eventType': 'PUSH_CALLBACK',
-      'accuracy': 40,
-      'deviceId': '""" + deviceId + """'
-      }"""
-  }
 
 }

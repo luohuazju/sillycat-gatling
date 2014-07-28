@@ -22,4 +22,22 @@ object EventJSONEntities {
       }"""
   }
 
+  def regesterDeviceEventJson(deviceId: String, appId: String, regKey: String = "fakeRegKey") = {
+    """{
+      'geoFenceDelta': false,
+      'appId':'""" + appId + """',
+      'eventType':'DEVICE_REGISTRATION',
+      'deviceId':'""" + deviceId + """',
+      'deviceRegKey':'""" + regKey + """',
+      'deviceType':'PHONE',
+      'osType':'ANDROID',
+      'osVersion':'1.0',
+      'latitude': -62.5,
+      'longitude': 98.5,
+      'timeZone':'America/Chicago',
+      'accuracy':60,
+      'searchRadius':1600
+    }"""
+  }
+
 }

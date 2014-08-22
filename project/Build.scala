@@ -57,7 +57,7 @@ object Dependencies {
   object V {
     val slf4j = "1.7.2"
     val logback = "1.0.0"
-    val gatling = "1.5.4"
+    val gatling = "1.5.6"
   }
 
   object Compile {

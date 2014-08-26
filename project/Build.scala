@@ -1,71 +1,86 @@
 import sbt._
-import Keys._
-import com.typesafe.startscript.StartScriptPlugin
-import cc.spray.revolver.RevolverPlugin._
-import classpath.ClasspathUtilities.isArchive
-import java.io.FileOutputStream
+import sbt.Keys._
+import Resolvers._
+import Dependencies._
 import sbtassembly.Plugin._
+import sbtassembly.AssemblyUtils._
 import AssemblyKeys._
+import BuildSettings._
+import io.gatling.sbt.GatlingPlugin
 
 object BuildSettings {
-  import Dependencies._
-
-  val buildOrganization = "com.sillycat.sillycat-gatling"
-  val buildVersion = "0.1"
-  val buildScalaVersion = "2.9.3"
-
-  val globalSettings = Seq(
-    organization := buildOrganization,
-    version := buildVersion,
-    scalaVersion := buildScalaVersion,
-    scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8"),
-    javacOptions := Seq("-Xlint:unchecked", "-Xlint:deprecation","-encoding", "utf8", "-Xmx4G"),
-    fork in test := true,
-    resolvers ++= Dependencies.resolutionRepos)
-  val projectSettings = Defaults.defaultSettings ++ globalSettings
+  val projectName = "sillycat-gatling"
+  val buildSettings = Seq(
+    organization := "org.sillycat",
+    version := "1.0.0",
+    scalaVersion := "2.10.4",
+    crossScalaVersions := Seq("2.10.2", "2.10.3", "2.10.4", "2.11.0", "2.11.1", "2.11.2"),
+    scalacOptions ++= Seq()
+  )
 }
 
-object Build extends sbt.Build {
-  import Dependencies._
-  import BuildSettings._
+object ApplicationBuild extends Build {
 
-  override lazy val settings = super.settings ++ globalSettings
-
-  lazy val gatlingTemplate = Project("gatling-sbt",
+  lazy val main = Project(
+    BuildSettings.projectName,
     file("."),
-    settings = projectSettings ++ assemblySettings ++
-      Revolver.settings ++
-      StartScriptPlugin.startScriptForJarSettings ++
-      Seq(libraryDependencies ++= Seq(
-        Compile.logback,
-        Compile.gatlingApp,
-        Compile.gatlingRecorder,
-        Compile.gatlingHighCharts
-      )))
-}
+    settings = BuildSettings.buildSettings ++ assemblySettings
+    ++
+    Seq(resolvers := myResolvers,
+        libraryDependencies ++= baseDeps,
+        mergeStrategy in assembly := mergeFirst
+    )
+  )
+    .enablePlugins(GatlingPlugin)
+    .settings(
+    mainClass in assembly := Some("com.sillycat.gatling.app.ExecutorApp"),
+    excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
+      cp filter {_.data.getName == "compile-0.1.0.jar"}
+    },
+    artifact in (Compile, assembly) ~= { art =>
+      art.copy(`classifier` = Some("assembly"))
+    }
+  )
 
-object Dependencies {
-
-  val resolutionRepos = Seq(
-    "Scala Tools" at "http://scala-tools.org/repo-releases/",
-    "Typesafe repo" at "http://repo.typesafe.com/typesafe/releases","Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository",
-    "Excilys" at "http://repository.excilys.com/content/groups/public",
-    "Excilys Snapshot" at "http://repository-gatling.forge.cloudbees.com/snapshot",
-    "spray repo" at "http://repo.spray.io",
-    "spray nightlies repo" at "http://nightlies.spray.io" )
-
-  object V {
-    val slf4j = "1.7.2"
-    val logback = "1.0.0"
-    val gatling = "1.5.6"
+  lazy val mergeFirst: String => MergeStrategy = {
+    case PathList("javax", "servlet", xs @ _*) => MergeStrategy.first
+    case PathList("org", "apache", "jasper", xs @ _*) => MergeStrategy.first
+    case PathList("org", "fusesource", xs @ _*) => MergeStrategy.first
+    case PathList("org", "apache", "commons", xs @ _*) => MergeStrategy.first
+    case PathList("org", "apache", "commons", "beanutils", xs @ _*) => MergeStrategy.first
+    case PathList("org", "apache", "commons", "collections", xs @ _*) => MergeStrategy.first
+    case PathList("com", "esotericsoftware", "minlog", xs @ _*) => MergeStrategy.first
+    case PathList("org", "eclipse", xs @ _*) => MergeStrategy.first
+    case PathList("META-INF", xs @ _*) =>
+      (xs map {_.toLowerCase}) match {
+        case ("changes.txt" :: Nil ) =>
+          MergeStrategy.discard
+        case ("manifest.mf" :: Nil) | ("eclipsef.rsa" :: Nil) | ("index.list" :: Nil) | ("dependencies" :: Nil) =>
+          MergeStrategy.discard
+        case ps @ (x :: xs) if ps.last.endsWith(".sf") || ps.last.endsWith(".dsa") || ps.last.endsWith("pom.properties") || ps.last.endsWith("pom.xml") =>
+          MergeStrategy.discard
+        case "plexus" :: xs =>
+          MergeStrategy.discard
+        case "services" :: xs =>
+          MergeStrategy.filterDistinctLines
+        case ("spring.schemas" :: Nil) | ("spring.handlers" :: Nil) =>
+          MergeStrategy.filterDistinctLines
+        case ps @ (x :: xs) if ps.last.endsWith(".jnilib") || ps.last.endsWith(".dll") =>
+          MergeStrategy.first
+        case ps @ (x :: xs) if ps.last.endsWith(".txt") =>
+          MergeStrategy.discard
+        case ("notice" :: Nil) | ("license" :: Nil) | ("mailcap" :: Nil )=>
+          MergeStrategy.discard
+        case _ => MergeStrategy.deduplicate
+      }
+    case "application.conf" => MergeStrategy.concat
+    case "about.html" => MergeStrategy.discard
+    case "plugin.properties" => MergeStrategy.first
+    case _ => MergeStrategy.first
   }
 
-  object Compile {
-    val gatlingApp = "com.excilys.ebi.gatling" % "gatling-app" % V.gatling % "compile"
-    val gatlingRecorder = "com.excilys.ebi.gatling" % "gatling-recorder" % V.gatling % "compile"
-    val gatlingHighCharts = "com.excilys.ebi.gatling.highcharts" % "gatling-charts-highcharts" % V.gatling % "compile"
-    val logback = "ch.qos.logback" % "logback-classic" % "1.0.0" % "runtime"
-    val log4j = "log4j" % "log4j" % "1.2.14" % "compile"
-  }
 }
+
+
+
 

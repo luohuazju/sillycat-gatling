@@ -8,4 +8,6 @@ resolvers += "Sonatype snapshots" at "https://oss.sonatype.org/content/repositor
 
 addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.7.0-SNAPSHOT")
 
-addSbtPlugin("io.gatling" % "sbt-plugin" % "1.0-RC1")
+addSbtPlugin("io.gatling" % "gatling-sbt" % "2.1.0")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.0.0-M3")

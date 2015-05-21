@@ -13,7 +13,7 @@ object BuildSettings {
   val buildSettings = Seq(
     organization := "org.sillycat",
     version := "1.0.0",
-    scalaVersion := "2.10.4",
+    scalaVersion := "2.11.6",
     crossScalaVersions := Seq("2.10.2", "2.10.3", "2.10.4", "2.11.0", "2.11.1", "2.11.2"),
     scalacOptions ++= Seq()
   )

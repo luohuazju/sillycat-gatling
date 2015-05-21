@@ -1,6 +1,5 @@
 package com.sillycat.gatling.basic
 
-import com.sillycat.gatling.GatlingBaseApp
 import com.typesafe.config.ConfigFactory
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._

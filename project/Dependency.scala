@@ -5,7 +5,6 @@ object Dependencies {
 
   val baseDeps = Seq (
     "log4j"                   % "log4j"                     % "1.2.17",
-    "io.gatling.highcharts"   % "gatling-charts-highcharts" % gatling_version,
-    "io.gatling"              % "gatling-test-framework"    % gatling_version
+    "io.gatling.highcharts"   % "gatling-charts-highcharts" % gatling_version
   )
 }

@@ -30,10 +30,14 @@ object ApplicationBuild extends Build {
         libraryDependencies ++= baseDeps,
         mergeStrategy in assembly := mergeFirst
     )
+    ++
+    Packaging.settings
+    ++
+    Packaging.server
   )
     .enablePlugins(GatlingPlugin)
     .settings(
-    mainClass in assembly := Some("com.sillycat.gatling.app.ExecutorApp"),
+    mainClass in assembly := Some("com.sillycat.gatling.ExecutorApp"),
     excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
       cp filter {_.data.getName == "compile-0.1.0.jar"}
     },

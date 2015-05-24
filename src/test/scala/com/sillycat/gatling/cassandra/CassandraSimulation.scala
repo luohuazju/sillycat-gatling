@@ -25,6 +25,8 @@
  */
 package com.sillycat.gatling.cassandra
 
+import java.nio.ByteBuffer
+
 import scala.concurrent.duration.DurationInt
 
 import com.datastax.driver.core.Cluster
@@ -36,57 +38,69 @@ import io.github.gatling.cql.Predef._;
 import io.gatling.core.scenario.Simulation
 
 class CassandraSimulation extends Simulation {
-  val keyspace = "test"
-  val table_name = "test_table"
-  val session = Cluster.builder().addContactPoint("127.0.0.1")
+  val keyspace = "attributes"
+  val table_name = "attributes"
+  val session = Cluster.builder().addContactPoints("ubuntu-dev1","ubuntu-dev2")
                   .build().connect(s"$keyspace") //Your C* session
   val cqlConfig = cql.session(session) //Initialize Gatling DSL with your session
 
   //Setup
-  session.execute(s"""CREATE KEYSPACE IF NOT EXISTS $keyspace 
-                      WITH replication = { 'class' : 'SimpleStrategy', 
-                                          'replication_factor': '1'}""")
-  session.execute(s"""CREATE TABLE IF NOT EXISTS $table_name (
-          id timeuuid,
-          num int,
-          str text,
-          PRIMARY KEY (id)
-        );
-      """)
-  //It's generally not advisable to use secondary indexes in you schema
-  session.execute(f"""CREATE INDEX IF NOT EXISTS $table_name%s_num_idx 
-                      ON $table_name%s (num)""")
+  //session.execute(s"""CREATE KEYSPACE IF NOT EXISTS $keyspace
+  //                    WITH replication = { 'class' : 'SimpleStrategy',
+  //                                        'replication_factor': '2'}""")
 
+//  session.execute(s"""CREATE TABLE IF NOT EXISTS $table_name (
+//          brandcode ascii,
+//          deviceid ascii,
+//          unixtime bigint,
+//          attrs blob,
+//          PRIMARY KEY ((brandcode, deviceid), unixtime)
+//        ) WITH COMPACT STORAGE AND
+//          CLUSTERING ORDER BY (unixtime DESC) AND
+//          bloom_filter_fp_chance=0.100000 AND
+//          caching='KEYS_ONLY' AND
+//          comment='' AND
+//          dclocal_read_repair_chance=0.000000 AND
+//          gc_grace_seconds=864000 AND
+//          read_repair_chance=0.100000 AND
+//          replicate_on_write='true' AND
+//          populate_io_cache_on_flush='false' AND
+//          compaction={'sstable_size_in_mb': '10', 'class': 'LeveledCompactionStrategy'} AND
+//          compression={};
+//      """)
+  //It's generally not advisable to use secondary indexes in you schema
+  //session.execute(f"""CREATE INDEX IF NOT EXISTS $table_name%s_num_idx
+  //                    ON $table_name%s (num)""")
 
   //Prepare your statement, we want to be effective, right?
   val prepared = session.prepare(s"""INSERT INTO $table_name 
-                                      (id, num, str) 
+                                      (brandcode, deviceid, unixtime, attrs)
                                       VALUES 
-                                      (now(), ?, ?)""")
-
+                                      (?, ?, ?, ?)""")
   val random = new util.Random
   val feeder = Iterator.continually( 
       // this feader will "feed" random data into our Sessions
       Map(
-          "randomString" -> random.nextString(20), 
-          "randomNum" -> random.nextInt()
+          "randomString" -> ByteBuffer.wrap(random.nextString(20).getBytes),
+          "randomNum" -> random.nextInt(1000000),
+          "now" -> System.currentTimeMillis/1000L
           ))
 
-  val scn = scenario("Two statements").repeat(1) { //Name your scenario
+  val scn = scenario("Huge Inserting").repeat(1) { //Name your scenario
     feed(feeder)
-    .exec(cql("simple SELECT") 
+    //.exec(cql("simple SELECT")
          // 'execute' can accept a string 
          // and understands Gatling expression language (EL), i.e. ${randomNum}
-        .execute("SELECT * FROM test_table WHERE num = ${randomNum}")) 
+    //    .execute("SELECT * FROM test_table WHERE num = ${randomNum}"))
     .exec(cql("prepared INSERT")
          // alternatively 'execute' accepts a prepared statement
         .execute(prepared)
          // you need to provide parameters for that (EL is supported as well)
-        .withParams(Integer.valueOf(random.nextInt()), "${randomString}")
+        .withParams("spark", "ios1-${randomNum}", "${now}" , "${randomString}")
         // and set a ConsistencyLevel optionally
         .consistencyLevel(ConsistencyLevel.ANY)) 
   }
 
-  setUp(scn.inject(rampUsersPerSec(10) to 100 during (30 seconds)))
+  setUp(scn.inject(rampUsersPerSec(20) to 150 during (5 minutes)))
     .protocols(cqlConfig)
 }

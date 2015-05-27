@@ -77,13 +77,26 @@ class CassandraSimulation extends Simulation {
                                       (brandcode, deviceid, unixtime, attrs)
                                       VALUES 
                                       (?, ?, ?, ?)""")
+  val preparedQuery = session.prepare(
+    s"""select
+          brandcode,
+          deviceid,
+          attrs
+        from
+          $table_name
+        where
+          brandcode = ? and
+          deviceid = ?
+     """)
+
   val random = new util.Random
   val feeder = Iterator.continually( 
       // this feader will "feed" random data into our Sessions
       Map(
           "randomString" -> ByteBuffer.wrap(random.nextString(20).getBytes),
           "randomNum" -> random.nextInt(1000000),
-          "now" -> System.currentTimeMillis/1000L
+          "now" -> System.currentTimeMillis/1000L,
+          "randomLmit" -> Math.max(random.nextInt(200),1)
           ))
 
   val scn = scenario("Huge Inserting").repeat(1) { //Name your scenario
@@ -98,9 +111,14 @@ class CassandraSimulation extends Simulation {
          // you need to provide parameters for that (EL is supported as well)
         .withParams("spark", "ios1-${randomNum}", "${now}" , "${randomString}")
         // and set a ConsistencyLevel optionally
-        .consistencyLevel(ConsistencyLevel.ANY)) 
+        .consistencyLevel(ConsistencyLevel.ANY))
+    .exec(cql("prepared SELECT")
+        .execute(preparedQuery)
+        .withParams("spark","ios1-${randomNum}"))
+    .exec(cql("prepared LOAD")
+       .execute("SELECT * FROM attributes limit ${randomLmit}"))
   }
 
-  setUp(scn.inject(rampUsersPerSec(20) to 150 during (5 minutes)))
+  setUp(scn.inject(rampUsersPerSec(10) to 50 during (60 minutes)))
     .protocols(cqlConfig)
 }

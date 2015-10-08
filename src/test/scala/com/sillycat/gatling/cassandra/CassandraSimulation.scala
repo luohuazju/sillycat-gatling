@@ -119,6 +119,6 @@ class CassandraSimulation extends Simulation {
        .execute("SELECT * FROM attributes limit ${randomLmit}"))
   }
 
-  setUp(scn.inject(rampUsersPerSec(10) to 50 during (60 minutes)))
+  setUp(scn.inject(rampUsersPerSec(10) to 50 during (5 minutes)))
     .protocols(cqlConfig)
 }
